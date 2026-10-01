@@ -24,6 +24,8 @@ model Ticket {
 
 }
 
+// Note: enums are just used to define a collection of fixed constants. TicketStatus is a type and exporting TicketStatus looks like this: type TicketStatus = "OPEN" | "IN_PROGRESS" | "DONE";
+
 enum TicketStatus {
     OPEN
     IN_PROGRESS

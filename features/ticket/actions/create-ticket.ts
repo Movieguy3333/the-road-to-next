@@ -1,6 +1,6 @@
 // Note: file not needed because of upsert form and actions, but for posterity sake, I am leaving it here.
 
-"use server";
+/* "use server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ticketsPath } from "@/paths";
@@ -19,3 +19,4 @@ export default async function createTicket(formData: FormData) {
   // Note: Once again, just like in delete-ticket.ts, we need to revalidate the path of the tickets page, so that the new ticket will be displayed on the tickets page in real-time.
   revalidatePath(ticketsPath());
 }
+ */
