@@ -1,9 +1,10 @@
-import { initialTickets } from "@/data";
+import { prisma } from "@/lib/prisma";
 
 async function getTickets() {
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  return new Promise((resolve) => {
-    resolve(initialTickets);
+  return await prisma.ticket.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 }
 

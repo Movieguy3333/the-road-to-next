@@ -1,12 +1,9 @@
-import Placeholder from "@/components/placeholder";
-import { Button } from "@/components/ui/button";
-
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ticketsPath } from "@/paths";
+
 import TicketItem from "@/features/ticket/components/ticket-item";
 
 import getTicket from "@/features/ticket/queries/get-ticket";
+
 type TicketPageProps = {
   params: {
     ticketId: string;
@@ -28,8 +25,10 @@ export default async function TicketsPage({ params }: TicketPageProps) {
   }
 
   return (
-    // --animate-fade-from-top needs to be referred to as animate-fade-from-top. In other words, we need to remove the two dashes (--)
     <div className="flex justify-center animate-fade-from-top">
+      {/*     --animate-fade-from-top needs to be referred to as
+      animate-fade-from-top. In other words, we need to remove the two dashes
+      (--) */}
       {/* Note: same thing as isDetail = {true} */}
       <TicketItem ticket={ticket} isDetail />
     </div>

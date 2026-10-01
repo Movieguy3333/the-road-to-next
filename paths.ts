@@ -14,3 +14,6 @@ export function ticketsPath() {
 export function ticketPath(ticketId: string) {
   return `/tickets/${ticketId}`;
 }
+export function ticketEditPath(ticketId: string) {
+  return `/tickets/${ticketId}/edit`;
+}

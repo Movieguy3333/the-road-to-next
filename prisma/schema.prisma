@@ -1,0 +1,31 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+ // Note: url is the connection string used by the application to make database requests.
+  url      = env("DATABASE_URL")
+ // Note: directUrl is basically the admin connection string. It is used to connect to the database directly, without using a connection pool. This is used for migrations and other administrative tasks.
+  directUrl = env("DIRECT_URL")
+}
+    // Note: "deadline" and "bounty" were added to demonstrate migrations we use this trick with default values to added the fields to the database WITHOUT CLEARING THE DATABASE along with npx prisma db push. Now that that its migrated, we can remove the default values:  deadline String @default("2027-01-01") and bounty Int @default(0)
+model Ticket {
+    id String @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    title String
+    content String @db.VarChar(2000)
+    status TicketStatus @default(OPEN)
+
+    deadline String 
+    bounty Int 
+
+}
+
+enum TicketStatus {
+    OPEN
+    IN_PROGRESS
+    DONE
+}

@@ -4,6 +4,7 @@ import "./globals.css";
 
 import Header from "@/components/header";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -94,6 +95,11 @@ By keeping the imports in the Server Component and passing them down as children
           <main className="min-h-screen flex-1 overflow-y-auto overflow-x-hidden  py-24 px-8 bg-secondary/20 flex flex-col">
             {children}
           </main>
+          {/* Note: <Toaster expand /> is the ui component. it is used alongside toast.success and toast.error */}
+          <Toaster expand />
+          {/* Note: Very interessting interaction here. Redirect toast uses an empty dependency array on the useEffect hook. Because layout pages stick around and don't re-render, layout just re-renders it's content.
+            We could add pathname to the dependency array to make sure the toast is only shown on the layout page, but we are going to use template.tsx instead
+          */}
         </ThemeProvider>
       </body>
     </html>
