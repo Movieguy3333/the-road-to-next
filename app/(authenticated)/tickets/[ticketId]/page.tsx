@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import TicketItem from "@/features/ticket/components/ticket-item";
 
 import getTicket from "@/features/ticket/queries/get-ticket";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { homePath } from "@/paths";
+import { Separator } from "@/components/ui/separator";
 
 type TicketPageProps = {
   params: {
@@ -25,12 +28,21 @@ export default async function TicketsPage({ params }: TicketPageProps) {
   }
 
   return (
-    <div className="flex justify-center animate-fade-from-top">
-      {/*     --animate-fade-from-top needs to be referred to as
+    <div className="flex flex-col gap-y-8">
+      <Breadcrumbs
+        breadcrumbs={[
+          { title: "Tickets", href: homePath() },
+          { title: ticket.title },
+        ]}
+      />
+      <Separator />
+      <div className="flex justify-center animate-fade-from-top">
+        {/* Note:  --animate-fade-from-top needs to be referred to as
       animate-fade-from-top. In other words, we need to remove the two dashes
       (--) */}
-      {/* Note: same thing as isDetail = {true} */}
-      <TicketItem ticket={ticket} isDetail />
+        {/* Note: same thing as isDetail = {true} */}
+        <TicketItem ticket={ticket} isDetail />
+      </div>
     </div>
   );
 }

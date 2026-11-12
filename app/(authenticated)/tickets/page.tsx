@@ -9,6 +9,9 @@ import Placeholder from "@/components/placeholder";
 
 import CardCompact from "@/components/card-compact";
 import TicketUpsertForm from "@/features/ticket/components/ticket-upsert-form";
+import { getAuth } from "@/features/auth/queries/get-auth";
+import { SearchParams } from "nuqs/server";
+import { searchParamsCache } from "@/features/ticket/search-params";
 
 /* Note: this is a dynamic route. It means that the page will be rendered on the server and then sent to the client. This is useful for data that is not static, like a list of tickets. The page will be rendered on the server, and the data will be sent to the client. The client will then render the page with the data. This is different from a static route, where the page is rendered on the server and sent to the client, but the data is already available on the client. This issue only shows up in build mode, not in development mode. This is not a great solution, so we will comment it out.
 
@@ -19,7 +22,11 @@ export const dynamic = "force-dynamic";
 export const revalidate = 5;
 */
 
-export default function TicketsPage() {
+type TicketsPageProps = {
+  searchParams: Promise<SearchParams>;
+};
+
+export default async function TicketsPage({ searchParams }: TicketsPageProps) {
   // Note: server-side rendering is not the same as a server component.
   /*   useEffect(() => {
     async function fetchTickets() {
@@ -29,6 +36,9 @@ export default function TicketsPage() {
 
     fetchTickets();
   }, []); */
+
+  const { user } = await getAuth();
+
   return (
     <div className="flex-1 flex flex-col gap-y-8">
       <Heading description="All your tickets in one place." title="Tickets" />
@@ -43,7 +53,10 @@ export default function TicketsPage() {
       <ErrorBoundary fallback={<Placeholder label="Something went wrong" />}>
         {/* Note: ErrorBoundary is an additional error boundary, on top of error.tsx. If something goes wrong in the Suspense component that houses TicketList, it will bubble up to the ErrorBoundary component, befor relying on error.tsx */}
         <Suspense fallback={<Spinner />}>
-          <TicketList />
+          <TicketList
+            userId={user?.id}
+            searchParams={await searchParamsCache.parse(searchParams)}
+          />
         </Suspense>
       </ErrorBoundary>
     </div>

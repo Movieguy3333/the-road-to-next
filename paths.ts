@@ -17,3 +17,21 @@ export function ticketPath(ticketId: string) {
 export function ticketEditPath(ticketId: string) {
   return `/tickets/${ticketId}/edit`;
 }
+export function signUpPath() {
+  return "/sign-up";
+}
+export function signInPath() {
+  return "/sign-in";
+}
+
+export function passwordForgotPath() {
+  return "/password-forgot";
+}
+
+export function accountProfilePath() {
+  // Note: hey moron, don't forget the "/" if you do, it will default to relative path and not absolute path.
+  return "/account/profile";
+}
+export function accountPasswordPath() {
+  return "/account/password";
+}

@@ -17,9 +17,26 @@ import { ticketEditPath } from "@/paths";
 import { Ticket } from "@prisma/client";
 // Note: very interesting import. Ticket is imported from the @prisma/client package. This means that the Ticket type is defined in the Prisma Client library and can be used in the application. This is a great way to share types between the client and server.
 import { ticketPath } from "@/paths";
+import { Prisma } from "@prisma/client";
+import { getAuth } from "@/features/auth/queries/get-auth";
+import { isOwner } from "@/features/auth/utils/is-owner";
 
 type TicketItemProps = {
-  ticket: Ticket;
+  /* Note: It's a type that says: "a Ticket, plus its related User attached."
+
+Normally a Ticket from Prisma only has its own columns (id, title, etc.) — no user field, because relations aren't loaded unless you ask. Since this component uses ticket.user somewhere, the prop type needs to reflect that the query fetched the user too.
+
+So instead of writing user: User by hand, you tell Prisma "give me the type for a Ticket query that includes user" — and it computes the correct shape for you. If the query ever changes, this type updates automatically to match.
+*/
+  ticket: Prisma.TicketGetPayload<{
+    include: {
+      user: {
+        select: {
+          username: true;
+        };
+      };
+    };
+  }>;
   isDetail: boolean;
 };
 import { TICKET_ICONS } from "@/features/ticket/constants";
@@ -35,6 +52,9 @@ import TicketMoreMenu from "./ticket-more-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 async function TicketItem({ ticket, isDetail }: TicketItemProps) {
+  // Note: you may be wondering if we introduced a performance issue by checking the user in the TicketItem component. The answer is no, because getAuth() is cached. So when all these ticketItems are rendered, only one ticket item will perform getAuth() and the rest will use the cached value. This is a great way to keep your application performant. using cache dedupes all the requests made within one render pass.
+  const { user } = await getAuth();
+  const isTicketOwner = isOwner(user, ticket);
   /*   const detailButton = (
     // Note: asChild basically means "ignore me as a wrapper and just render my child". This is useful when you want to use a component that expects a certain type of child (like a button) but you want to use a different component (like a Link) instead. In this case, we are using the Button component as a wrapper for the Link component, but we want the Button to be ignored and just render the Link.
     <Button variant="outline" size="icon" className="h-10 w-10 p-0">
@@ -57,7 +77,7 @@ async function TicketItem({ ticket, isDetail }: TicketItemProps) {
     </Button>
   );
 
-  const editButton = (
+  const editButton = isTicketOwner ? (
     <Button
       variant="outline"
       size="icon"
@@ -68,7 +88,7 @@ async function TicketItem({ ticket, isDetail }: TicketItemProps) {
     >
       <LucidePencil className="h-4 w-4" />
     </Button>
-  );
+  ) : null;
 
   /* 
   Note: Old way of doing it. make the component a client component in order to use the onClick event. This is not the best way to do it because it makes the component a client component, which means it will be rendered on the client and not on the server. This is not ideal because we want to keep the component as a server component as much as possible for performance reasons. Instead, we can use the form action attribute to make a POST request to the server. This is a server action and will be executed on the server.
@@ -94,7 +114,7 @@ async function TicketItem({ ticket, isDetail }: TicketItemProps) {
     </form>
   ); */
 
-  const moreMenu = (
+  const moreMenu = isTicketOwner ? (
     <TicketMoreMenu
       ticket={ticket}
       trigger={
@@ -103,7 +123,7 @@ async function TicketItem({ ticket, isDetail }: TicketItemProps) {
         </Button>
       }
     />
-  );
+  ) : null;
   return (
     <div
       // Note: Another way to conditional styling
@@ -136,7 +156,7 @@ async function TicketItem({ ticket, isDetail }: TicketItemProps) {
         </CardContent>
         <CardFooter className="flex justify-between">
           <p className="text-sm text-muted-foreground">
-            Deadline: {ticket.deadline}
+            Deadline: {ticket.deadline} by {ticket.user.username}
           </p>
           <p className="text-sm text-muted-foreground">
             Bounty: {toCurrencyFromCents(ticket.bounty)}

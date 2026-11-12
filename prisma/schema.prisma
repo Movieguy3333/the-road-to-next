@@ -9,6 +9,26 @@ datasource db {
   url      = env("DATABASE_URL")
  // Note: directUrl is basically the admin connection string. It is used to connect to the database directly, without using a connection pool. This is used for migrations and other administrative tasks.
   directUrl = env("DIRECT_URL")
+
+
+}
+
+model User {
+id String @id @default(cuid())
+username String @unique
+email String @unique
+passwordHash String
+sessions Session[] 
+tickets Ticket[]
+}
+
+model Session {
+id String @id 
+userId String
+expiresAt DateTime
+// Note: this defines the relation field linking a Session to its owning User, using the userId field on Session to match the id field on User. onDelete: Cascade ensures that when a User is deleted, all of its Sessions are also deleted.
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+// Note: the following is used for MySQL or other databases that don't support foreign keys. If it is not needed, then it will speed up the queries.
 }
     // Note: "deadline" and "bounty" were added to demonstrate migrations we use this trick with default values to added the fields to the database WITHOUT CLEARING THE DATABASE along with npx prisma db push. Now that that its migrated, we can remove the default values:  deadline String @default("2027-01-01") and bounty Int @default(0)
 model Ticket {
@@ -21,6 +41,12 @@ model Ticket {
 
     deadline String 
     bounty Int 
+    
+    userId String
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+  // Note: We technically don't need this index, but it helps with performance. We also need it if we use MySQL or a different ORM.
+    @@index([userId])
 
 }
 

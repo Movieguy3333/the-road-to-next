@@ -6,6 +6,8 @@
 
 @theme inline {
   --animate-fade-from-top: fade-from-top 0.5s ease-out;
+  --animate-header-from-top: header-from-top 0.5s ease-out;
+  --animate-siderbar-from-left: siderbar-from-left 0.5s ease-out;
 
   @keyframes fade-from-top {
     0% {
@@ -16,6 +18,22 @@
     100% {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+  @keyframes header-from-top {
+    0% {
+      transform: translateY(-100%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+  @keyframes siderbar-from-left {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(0);
     }
   }
 

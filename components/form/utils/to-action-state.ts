@@ -56,12 +56,14 @@ function fromErrorToActionState(
 export function toActionState(
   status: ActionState["status"],
   message: string,
+  formData?: FormData,
 ): ActionState {
   return {
     status: status,
     message: message,
     fieldErrors: {},
     timestamp: Date.now(),
+    payload: formData,
   };
 }
 
