@@ -39,7 +39,7 @@ async function signUp(_actionState: ActionState, formData: FormData) {
       username: formData.get("username"),
       email: formData.get("email"),
       password: formData.get("password"),
-      // confirmPassword: formData.get("confirmPassword"),
+      confirmPassword: formData.get("confirmPassword"),
     });
 
     const hashedPassword = await hash(password);

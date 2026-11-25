@@ -7,12 +7,17 @@ import { redirect } from "next/navigation";
 import { ticketsPath } from "@/paths";
 import { revalidatePath } from "next/cache";
 import { setCookieByKey } from "@/actions/cookie";
-import fromErrorToActionState from "@/components/form/utils/to-action-state";
+import fromErrorToActionState, {
+  ActionState,
+} from "@/components/form/utils/to-action-state";
 import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-redirect";
 import { isOwner } from "@/features/auth/utils/is-owner";
 import { toActionState } from "@/components/form/utils/to-action-state";
 
-export default async function deleteTicket(id: string) {
+export default async function deleteTicket(
+  id: string,
+  _actionState: ActionState,
+) {
   const { user } = await getAuthOrRedirect();
   try {
     if (id) {

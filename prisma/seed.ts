@@ -38,6 +38,18 @@ const tickets = [
   },
 ];
 
+const comments = [
+  {
+    content: "Comment 1 for ticket 1",
+  },
+  {
+    content: "Comment 2 for ticket 1",
+  },
+  {
+    content: "Comment 1 for ticket 2",
+  },
+];
+
 const seed = async () => {
   // Note: this is a safeguard to ensure that the database is empty before seeding
 
@@ -54,6 +66,7 @@ We can swap the delete order and it will work. so the follwing will work:
 
 however, we will just leave it as it is.
   */
+  await prisma.comment.deleteMany();
   await prisma.ticket.deleteMany();
   await prisma.user.deleteMany();
 
@@ -81,10 +94,18 @@ however, we will just leave it as it is.
     })),
   });
 
-  await prisma.ticket.createMany({
+  const dbTickets = await prisma.ticket.createManyAndReturn({
     data: tickets.map((ticket) => ({
       ...ticket,
       userId: dbUsers[0].id,
+    })),
+  });
+
+  await prisma.comment.createMany({
+    data: comments.map((comment) => ({
+      ...comment,
+      userId: dbUsers[0].id,
+      ticketId: dbTickets[0].id,
     })),
   });
 };

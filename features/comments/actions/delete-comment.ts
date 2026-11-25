@@ -1,0 +1,52 @@
+"use server";
+
+// Note: When you add "use server" to a function (or at the top of a file containing functions), you are explicitly creating a Server Action. You are telling the Next.js compiler: "When a Client Component imports this function, do not give it the actual code. Instead, leave the code on the server, and give the client a hidden network request." It is essentially acts as a gateway to server world. You need it to use this action in a client component.
+
+import { prisma } from "@/lib/prisma";
+import type { ActionState } from "@/components/form/utils/to-action-state";
+
+import { ticketPath } from "@/paths";
+import { revalidatePath } from "next/cache";
+
+import fromErrorToActionState from "@/components/form/utils/to-action-state";
+import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-redirect";
+import { isOwner } from "@/features/auth/utils/is-owner";
+import { toActionState } from "@/components/form/utils/to-action-state";
+
+export async function deleteComment(id: string) {
+  const { user } = await getAuthOrRedirect();
+  const comment = await prisma.comment.findUnique({
+    where: { id },
+  });
+  try {
+    if (id) {
+      if (!comment || !isOwner(user, comment)) {
+        return toActionState(
+          "ERROR",
+          "Not authorized to delete a comment that is not yours",
+        );
+      }
+    }
+
+    await prisma.comment.delete({
+      where: {
+        id: id,
+      },
+    });
+  } catch (error) {
+    return fromErrorToActionState(error);
+  }
+
+  /* Note: client-side cache is "soft" cache, while server-side cache is "hard" cache.
+ Soft cache = Router Cache (in-browser, RSC payload), driven by <Link prefetch> and next.config.js staleTimes.
+ Hard cache = Data Cache / Full Route Cache (on the server), driven by `export const revalidate = 5` or `dynamic = "force-dynamic"`.
+*/
+  // Note: revalidatePath is used to invalidate the cache and fetch the latest data. This to prevent stale data from being served to the client.
+
+  revalidatePath(ticketPath(comment?.ticketId ?? ""));
+  return toActionState("SUCCESS", "Comment deleted");
+  /* 
+  Note: I ran into a bug where the toast message was not showing because I forgot to await. remember the way await works. it pauses the execution of the function and waits for the promise to resolve. so if you forget to await, the function will continue to execute and the promise will not resolve, and the toast message will not show because you will be redirected before the promise resolves. Here is a golden rule: if a function is declared async, treat calling it without await as a red flag unless you deliberately want fire-and-forget behavior (e.g., logging that truly doesn't matter if it's delayed).
+
+  */
+}

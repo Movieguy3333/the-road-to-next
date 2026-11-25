@@ -20,6 +20,7 @@ email String @unique
 passwordHash String
 sessions Session[] 
 tickets Ticket[]
+comments Comment[]
 }
 
 model Session {
@@ -45,8 +46,24 @@ model Ticket {
     userId String
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
     
+    comments Comment[]
   // Note: We technically don't need this index, but it helps with performance. We also need it if we use MySQL or a different ORM.
     @@index([userId])
+
+}
+
+model Comment{
+id String @id @default(cuid())
+createdAt DateTime @default(now())
+content String @db.VarChar(1024)
+ticketId String
+ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+userId String?
+// Note: if user gets deleted, we don't want to delete the comment. kinda like how reddit works.
+user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+    
+@@index([ticketId])
+@@index([userId])
 
 }
 

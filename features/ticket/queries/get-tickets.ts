@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { ParsedSearchParams } from "@/features/ticket/search-params";
+import { getAuth } from "@/features/auth/queries/get-auth";
+import { isOwner } from "@/features/auth/utils/is-owner";
 
 // Note: userId is optional because of the home page not passing userId into TicketList
 async function getTickets(
   userId: string | undefined,
   searchParams: ParsedSearchParams,
 ) {
+  const { user } = await getAuth();
   const where = {
     // Note: when userId is undefined, this will not filter by userId.
     userId: userId,
@@ -81,7 +84,10 @@ async function getTickets(
   ]);
 
   return {
-    list: tickets,
+    list: tickets.map((ticket) => ({
+      ...ticket,
+      isOwner: isOwner(user, ticket),
+    })),
     metadata: {
       count,
       hasNextPage: skip + take < count,

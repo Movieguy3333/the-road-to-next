@@ -3,8 +3,6 @@ import { searchParamsCache } from "@/features/ticket/search-params";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  new URLSearchParams();
-
   console.log(searchParams);
 
   /* Note:

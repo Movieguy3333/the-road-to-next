@@ -1,9 +1,10 @@
 // Note: this Ticket
-import type { Ticket } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
-export default async function getTicket(
-  ticketId: string,
-): Promise<Ticket | null> {
+import { getAuth } from "@/features/auth/queries/get-auth";
+import { isOwner } from "@/features/auth/utils/is-owner";
+export default async function getTicket(ticketId: string) {
+  const { user } = await getAuth();
   /* Note:
 
     Here's the classic scenario of request memoization: a layout and a page both need the same piece of data during one request.
@@ -62,7 +63,7 @@ A couple of things worth keeping in mind:
 Scope is one render pass. It doesn't survive across separate requests — that persistence is the Data Cache's job (revalidate/force-*), not this.
 Cache key is argument equality. getUser('123') twice hits the memo; getUser({ id: '123' }) twice with a new object literal each time won't, since it's a different reference. Stick to primitives or a stable reference.
     */
-  return await prisma.ticket.findUnique({
+  const ticket = await prisma.ticket.findUnique({
     where: {
       id: ticketId,
     },
@@ -74,4 +75,12 @@ Cache key is argument equality. getUser('123') twice hits the memo; getUser({ id
       },
     },
   });
+
+  if (!ticket) {
+    return null;
+  }
+  return {
+    ...ticket,
+    isOwner: isOwner(user, ticket),
+  };
 }

@@ -1,7 +1,7 @@
-// Note: If this file doesn't have "use client", this TicketItem component can be both a client and server component depending on the parent component. TicketItem is used in two files, /Users/meedo/Desktop/Road-To-Next/the-road-to-next/app/tickets/[ticketId]/page.tsx and /Users/meedo/Desktop/Road-To-Next/the-road-to-next/app/tickets/page.tsx. on the first one, it is a client component and on the second one, it is a server component.
+// Note: We did a lot of work to turn this component into a client component for demonstration purposes.
 
-// Note: this needs to be a client component because of the onClick event on the delete button. The delete button is only rendered when isDetail is true, which is only the case when the parent component is /Users/meedo/Desktop/Road-To-Next/the-road-to-next/app/tickets/[ticketId]/page.tsx. This means that the delete button will only be rendered on the ticket detail page, which is a client component. Therefore, this component needs to be a client component as well. Just kidding, we don't need to make it a client component, we can just use the form action attribute to make a POST request to the server. This is a server action and will be executed on the server.
-
+// Note: Console logs appear on the server terminal and the browser console. This is because client components are server-side rendered but they also get re-rendered on the client side as part of the hydration step so that javascript get attached to our client components for interactivity and stateful values.
+import type { CommentClient } from "@/features/comments/types";
 import {
   Card,
   CardContent,
@@ -9,17 +9,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import deleteTicket from "@/features/ticket/actions/delete-ticket";
+
 import clsx from "clsx";
 import Link from "next/link";
 import { ticketEditPath } from "@/paths";
 
-import { Ticket } from "@prisma/client";
 // Note: very interesting import. Ticket is imported from the @prisma/client package. This means that the Ticket type is defined in the Prisma Client library and can be used in the application. This is a great way to share types between the client and server.
 import { ticketPath } from "@/paths";
 import { Prisma } from "@prisma/client";
-import { getAuth } from "@/features/auth/queries/get-auth";
-import { isOwner } from "@/features/auth/utils/is-owner";
+
+import { Comments } from "@/features/comments/components/comments";
+import { TICKET_ICONS } from "@/features/ticket/constants";
+import {
+  LucideSquareArrowOutUpRight,
+  LucidePencil,
+  LucideMoreVertical,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toCurrencyFromCents } from "@/utils/currency";
+import TicketMoreMenu from "./ticket-more-menu";
 
 type TicketItemProps = {
   /* Note: It's a type that says: "a Ticket, plus its related User attached."
@@ -36,25 +44,15 @@ So instead of writing user: User by hand, you tell Prisma "give me the type for 
         };
       };
     };
-  }>;
+  }> & { isOwner: boolean };
   isDetail: boolean;
+  comments?: React.ReactNode;
 };
-import { TICKET_ICONS } from "@/features/ticket/constants";
-import {
-  LucideSquareArrowOutUpRight,
-  LucideTrash,
-  LucidePencil,
-  LucideMoreVertical,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toCurrencyFromCents } from "@/utils/currency";
-import TicketMoreMenu from "./ticket-more-menu";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 
-async function TicketItem({ ticket, isDetail }: TicketItemProps) {
+function TicketItem({ ticket, isDetail, comments }: TicketItemProps) {
   // Note: you may be wondering if we introduced a performance issue by checking the user in the TicketItem component. The answer is no, because getAuth() is cached. So when all these ticketItems are rendered, only one ticket item will perform getAuth() and the rest will use the cached value. This is a great way to keep your application performant. using cache dedupes all the requests made within one render pass.
-  const { user } = await getAuth();
-  const isTicketOwner = isOwner(user, ticket);
+  /*   const { user } = await getAuth();
+  const isTicketOwner = isOwner(user, ticket); */
   /*   const detailButton = (
     // Note: asChild basically means "ignore me as a wrapper and just render my child". This is useful when you want to use a component that expects a certain type of child (like a button) but you want to use a different component (like a Link) instead. In this case, we are using the Button component as a wrapper for the Link component, but we want the Button to be ignored and just render the Link.
     <Button variant="outline" size="icon" className="h-10 w-10 p-0">
@@ -77,7 +75,7 @@ async function TicketItem({ ticket, isDetail }: TicketItemProps) {
     </Button>
   );
 
-  const editButton = isTicketOwner ? (
+  const editButton = ticket.isOwner ? (
     <Button
       variant="outline"
       size="icon"
@@ -114,7 +112,7 @@ async function TicketItem({ ticket, isDetail }: TicketItemProps) {
     </form>
   ); */
 
-  const moreMenu = isTicketOwner ? (
+  const moreMenu = ticket.isOwner ? (
     <TicketMoreMenu
       ticket={ticket}
       trigger={
@@ -125,60 +123,63 @@ async function TicketItem({ ticket, isDetail }: TicketItemProps) {
     />
   ) : null;
   return (
-    <div
-      // Note: Another way to conditional styling
-      className={clsx("w-full flex gap-x-1 ", {
+    <div // Note: Another way to conditional styling
+      className={clsx("w-full flex flex-col gap-y-8 ", {
         "max-w-[580px]": isDetail,
         "max-w-[420px]": !isDetail,
       })}
     >
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex gap-x-2">
-            <span>{TICKET_ICONS[ticket.status]}</span>
-            {/* Note:
+      <div className="flex gap-x-2">
+        <Card className="w-full flex gap-x-4">
+          <CardHeader>
+            <CardTitle className="flex gap-x-2">
+              <span>{TICKET_ICONS[ticket.status]}</span>
+              {/* Note:
               The "truncate" class is used to truncate the text if it overflows the container. This is useful for displaying long titles or content without breaking the layout.
               */}
-            <span className="truncate ">{ticket.title}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Note:
+              <span className="truncate ">{ticket.title}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Note:
               The "clamp-3" class is used to limit the number of lines of text to 3. This is useful for displaying long content without breaking the layout. It uses the CSS property "line-clamp" which is a part of the CSS Overflow Module Level 4 specification. It is not supported in all browsers, but it is supported in most modern browsers.
               */}
-          <span
-            className={clsx("line whitespace-break-spaces", {
-              "line-clamp-3": !isDetail,
-            })}
-          >
-            {ticket.content}
-          </span>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <p className="text-sm text-muted-foreground">
-            Deadline: {ticket.deadline} by {ticket.user.username}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Bounty: {toCurrencyFromCents(ticket.bounty)}
-          </p>
-        </CardFooter>
-      </Card>
+            <span
+              className={clsx("line whitespace-break-spaces", {
+                "line-clamp-3": !isDetail,
+              })}
+            >
+              {ticket.content}
+            </span>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <p className="text-sm text-muted-foreground">
+              Deadline: {ticket.deadline} by {ticket.user.username}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Bounty: {toCurrencyFromCents(ticket.bounty)}
+            </p>
+          </CardFooter>
+        </Card>
 
-      <div className="flex flex-col gap-y-1">
-        {isDetail ? (
-          <>
-            {editButton}
-
-            {moreMenu}
-          </>
-        ) : (
-          <>
-            {" "}
-            {detailButton}
-            {editButton}{" "}
-          </>
-        )}
+        <div className="flex flex-col gap-y-1">
+          {isDetail ? (
+            <>
+              {editButton}
+              {moreMenu}
+            </>
+          ) : (
+            <>
+              {" "}
+              {detailButton}
+              {editButton}{" "}
+            </>
+          )}
+        </div>
       </div>
+      {/*   Note: don't need to conditionally render comments based on isDetail here because
+      we are passing the comments as optional. Just depends on how we use TicketItem. */}
+      {comments}
     </div>
   );
 }

@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import TicketUpsertForm from "@/features/ticket/components/ticket-upsert-form";
 
 import getTicket from "@/features/ticket/queries/get-ticket";
-import { isOwner } from "@/features/auth/utils/is-owner";
-import { getAuth } from "@/features/auth/queries/get-auth";
+
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { homePath } from "@/paths";
 import { Separator } from "@/components/ui/separator";
@@ -17,7 +16,6 @@ type TicketEditPageProps = {
 };
 
 async function TicketEditPage({ params }: TicketEditPageProps) {
-  const { user } = await getAuth();
   const { ticketId } = await params;
   const ticket = await getTicket(ticketId);
 
@@ -32,9 +30,7 @@ It's a common JS/TS idiom to coerce any value into a strict boolean, which is ni
   */
   const isTicketFound = !!ticket;
 
-  const isTicketOwner = isOwner(user, ticket);
-
-  if (!isTicketFound || !isTicketOwner) {
+  if (!isTicketFound || !ticket.isOwner) {
     notFound();
   }
 
